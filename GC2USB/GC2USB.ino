@@ -16,130 +16,93 @@
 
 #define delay(X) delayMicroseconds(X * 1000)
 
+#define NORM(X) ({short val = 128 * (X - 128) / 90; abs(val) < 20 ? 128 : val >= 128 ? 255 : val < -128 ? 0 : val + 128; })
+
+#ifdef DEBUG
+#define SERIAL_BEGIN() Serial.begin(115200)
+#define SERIAL_PRINT(X) Serial.print(X)
+#define SERIAL_PRINTLN(X) Serial.println(X)
+#else
+#define SERIAL_BEGIN() do {} while(0)
+#define SERIAL_PRINT(X) do {} while(0)
+#define SERIAL_PRINTLN(X) do {} while(0)
+#endif
+
 static int port = CONTROLLER_ID_BASE;
 
 void processControllerReport(ControllerReport *report, uchar controllerID)
 {
-    uchar usbReport[USB_REPORT_BUFFER_SIZE] = {0};
-    uchar buttons = 0;
-    uchar hatSwitch = 0;
-    //uchar cHatSwitch = 0;
+    static uchar usbReport[USB_REPORT_BUFFER_SIZE] = {0};
+    uchar buttons;
+    uchar hatSwitch;
     int buttonNumber = 0;
     int offset = 0;
+    
 
-    if (report->left)
-    {
-        if (report->up)
-        {
-            hatSwitch = 8;
-        }
-        else if (report->down)
-        {
-            hatSwitch = 6;
-        }
-        else
-        {
-            hatSwitch = 7;
-        }
-    }
-    else if (report->right)
-    {
-        if (report->up)
-        {
-            hatSwitch = 2;
-        }
-        else if (report->down)
-        {
-            hatSwitch = 4;
-        }
-        else
-        {
-            hatSwitch = 3;
-        }
-    }
-    else if (report->up)
-    {
-        hatSwitch = 1;
-    }
-    else if (report->down)
-    {
-        hatSwitch = 5;
-    }
-
-    /*if (C_LEFT(report))
-    {
-        if (C_UP(report))
-        {
-            cHatSwitch = 8;
-        }
-        else if (C_DOWN(report))
-        {
-            cHatSwitch = 6;
-        }
-        else
-        {
-            cHatSwitch = 7;
-        }
-    }
-    else if (C_RIGHT(report))
-    {
-        if (C_UP(report))
-        {
-            cHatSwitch = 2;
-        }
-        else if (C_DOWN(report))
-        {
-            cHatSwitch = 4;
-        }
-        else
-        {
-            cHatSwitch = 3;
-        }
-    }
-    else if (C_UP(report))
-    {
-        cHatSwitch = 1;
-    }
-    else if (C_DOWN(report))
-    {
-        cHatSwitch = 5;
-    }*/
-
-    usbReport[offset++] = controllerID + 1;
+    //usbReport[offset++] = controllerID + 1;
+    usbReport[offset++] = 1;
 
     //usbReport[offset++] = (hatSwitch << 4) | cHatSwitch;
-    usbReport[offset++] = hatSwitch;
+    //usbReport[offset++] = hatSwitch;
 
-    usbReport[offset++] = report->jx_axis;
-    usbReport[offset++] = report->jy_axis;
-    usbReport[offset++] = report->cx_axis;
-    usbReport[offset++] = report->cy_axis;
-    usbReport[offset++] = report->l_axis;
-    usbReport[offset++] = report->r_axis;
+    usbReport[offset++] = NORM(report->jx_axis);
+    usbReport[offset++] = 255 - NORM(report->jy_axis);
+    usbReport[offset++] = NORM(report->cx_axis);
+    usbReport[offset++] = 255 - NORM(report->cy_axis);
 
-    buttons |= report->start ? 1 << buttonNumber : 0;
-    buttonNumber++;
-    buttons |= report->a ? 1 << buttonNumber : 0;
-    buttonNumber++;
-    buttons |= report->b ? 1 << buttonNumber : 0;
-    buttonNumber++;
-    buttons |= report->x ? 1 << buttonNumber : 0;
-    buttonNumber++;
-    buttons |= report->y ? 1 << buttonNumber : 0;
-    buttonNumber++;
-    buttons |= report->z ? 1 << buttonNumber : 0;
-    buttonNumber++;
+    if (!report->start) {
+        hatSwitch = report->up   && report->right ? 1 :
+              report->up   && report->left  ? 7 :
+              report->down && report->right ? 3 :
+              report->down && report->left  ? 5 :
+              report->up                    ? 0 :
+              report->down                  ? 4 :
+              report->left                  ? 6 :
+              report->right                 ? 2 : 8;
+       
+        buttons = hatSwitch & 0x0f;
+    
+        buttonNumber = 4;
+        buttons |= report->b ? 1 << buttonNumber : 0;
+        buttonNumber++;
+        buttons |= report->a ? 1 << buttonNumber : 0;
+        buttonNumber++;
+        buttons |= report->x ? 1 << buttonNumber : 0;
+        buttonNumber++;
+        buttons |= report->y ? 1 << buttonNumber : 0;
+    }
+    usbReport[offset++] = buttons;
+    
+    buttons = 0;
+    buttonNumber = 0;
     buttons |= report->l ? 1 << buttonNumber : 0;
     buttonNumber++;
     buttons |= report->r ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->z ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->start && report->b ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->start && report->y ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->start && report->x ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->start && report->left ? 1 << buttonNumber : 0;
+    buttonNumber++;
+    buttons |= report->start && report->right ? 1 << buttonNumber : 0;
+    usbReport[offset++] = buttons;
 
+    buttons = 0;
+    buttonNumber = 0;
+    buttons |= report->start && report->a ? 1 << buttonNumber : 0;
     usbReport[offset++] = buttons;
 
     UsbGamePad.sendReport(usbReport);
 }
 
 void setup() {
-    NIN_arduinoSetDataPort('B');
+    SERIAL_BEGIN();
+    NIN_arduinoSetDataPort('C');
 }
 
 void loop()
@@ -148,7 +111,7 @@ void loop()
     ControllerType type = INVALID_TYPE;
     ControllerReport report = {0};
     bool id[ID_LENGTH];
-    
+
     UsbGamePad.update();
     digitalWrite(13, !digitalRead(13));
 
@@ -165,20 +128,18 @@ void loop()
     if (type == UNKNOWN_TYPE)
     {
         int j;
-    
-        /*Serial.begin(115200);
-        Serial.print("Unknown controller: ");
+        
+        SERIAL_PRINT("Unknown controller: ");
         for (j = 0; j <  ID_LENGTH; j++)
         {
-            Serial.print(id[j]);
+            SERIAL_PRINT(id[j]);
         }
-        Serial.print("\n");
-        Serial.end();*/
+        SERIAL_PRINT("\r\n");
     }
     else if (type != INVALID_TYPE)
     {
         bool valid = false;
-        
+
         for (i = 0; !valid && i < NUM_RETRIES; i++)
         {
             valid = NIN_requestControllerReport(&report, type);
@@ -187,7 +148,12 @@ void loop()
         if (valid)
         {
             processControllerReport(&report, (uchar)(port - CONTROLLER_ID_BASE));
-            delay(10);
+            SERIAL_PRINT("r");
+            delay(10);      
+        }
+        else
+        {
+            SERIAL_PRINT("i");
         }
     }
 }

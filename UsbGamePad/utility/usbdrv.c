@@ -141,7 +141,7 @@ PROGMEM const char usbDescriptorConfiguration[] = {    /* USB configuration desc
     9,          /* sizeof(usbDescriptorConfiguration): length of descriptor in bytes */
     USBDESCR_CONFIG,    /* descriptor type */
     18 + 7 * USB_CFG_HAVE_INTRIN_ENDPOINT + 7 * USB_CFG_HAVE_INTRIN_ENDPOINT3 +
-                (USB_CFG_DESCR_PROPS_HID & 0xff), 0,
+                (USB_CFG_DESCR_PROPS_HID & 0xff) + 7, 0,
                 /* total length of data returned (including inlined descriptors) */
     1,          /* number of interfaces in this configuration */
     1,          /* index of this configuration */
@@ -157,7 +157,7 @@ PROGMEM const char usbDescriptorConfiguration[] = {    /* USB configuration desc
     USBDESCR_INTERFACE, /* descriptor type */
     0,          /* index of this interface */
     0,          /* alternate setting for this interface */
-    USB_CFG_HAVE_INTRIN_ENDPOINT + USB_CFG_HAVE_INTRIN_ENDPOINT3, /* endpoints excl 0: number of endpoint descriptors to follow */
+    USB_CFG_HAVE_INTRIN_ENDPOINT + USB_CFG_HAVE_INTRIN_ENDPOINT3 + 1, /* endpoints excl 0: number of endpoint descriptors to follow */
     USB_CFG_INTERFACE_CLASS,
     USB_CFG_INTERFACE_SUBCLASS,
     USB_CFG_INTERFACE_PROTOCOL,
@@ -169,7 +169,7 @@ PROGMEM const char usbDescriptorConfiguration[] = {    /* USB configuration desc
     0x00,       /* target country code */
     0x01,       /* number of HID Report (or other HID class) Descriptor infos to follow */
     0x22,       /* descriptor type: report */
-    USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH, 0,  /* total length of report descriptor */
+    (char)USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH & 0xff, (char)(USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH >> 8), /* total length of report descriptor */
 #endif
 #if USB_CFG_HAVE_INTRIN_ENDPOINT    /* endpoint descriptor for endpoint 1 */
     7,          /* sizeof(usbDescrEndpoint) */
@@ -187,6 +187,12 @@ PROGMEM const char usbDescriptorConfiguration[] = {    /* USB configuration desc
     8, 0,       /* maximum packet size */
     USB_CFG_INTR_POLL_INTERVAL, /* in ms */
 #endif
+    7,          /* sizeof(usbDescrEndpoint) */
+    USBDESCR_ENDPOINT,  /* descriptor type = endpoint */
+    (char)(0x01), /* OUT endpoint*/
+    0x03,       /* attrib: Interrupt endpoint */
+    8, 0,       /* maximum packet size */
+    USB_CFG_INTR_POLL_INTERVAL, /* in ms */
 };
 #endif
 

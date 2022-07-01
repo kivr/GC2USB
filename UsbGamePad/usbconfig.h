@@ -12,17 +12,17 @@
 #define __usbconfig_h_included__
 
 /*
-General Description:
-This file is an example configuration (with inline documentation) for the USB
-driver. It configures V-USB for USB D+ connected to Port D bit 2 (which is
-also hardware interrupt 0 on many devices) and USB D- to Port D bit 4. You may
-wire the lines to any other port, as long as D+ is also wired to INT0 (or any
-other hardware interrupt, as long as it is the highest level interrupt, see
-section at the end of this file).
-+ To create your own usbconfig.h file, copy this file to your project's
-+ firmware source directory) and rename it to "usbconfig.h".
-+ Then edit it accordingly.
-*/
+   General Description:
+   This file is an example configuration (with inline documentation) for the USB
+   driver. It configures V-USB for USB D+ connected to Port D bit 2 (which is
+   also hardware interrupt 0 on many devices) and USB D- to Port D bit 4. You may
+   wire the lines to any other port, as long as D+ is also wired to INT0 (or any
+   other hardware interrupt, as long as it is the highest level interrupt, see
+   section at the end of this file).
+   + To create your own usbconfig.h file, copy this file to your project's
+   + firmware source directory) and rename it to "usbconfig.h".
+   + Then edit it accordingly.
+ */
 
 /* ---------------------------- Hardware Config ---------------------------- */
 
@@ -122,7 +122,7 @@ section at the end of this file).
  * The value is in milliamperes. [It will be divided by two since USB
  * communicates power requirements in units of 2 mA.]
  */
-#define USB_CFG_IMPLEMENT_FN_WRITE      0
+#define USB_CFG_IMPLEMENT_FN_WRITE      1
 /* Set this to 1 if you want usbFunctionWrite() to be called for control-out
  * transfers. Set it to 0 if you don't need it and want to save a couple of
  * bytes.
@@ -144,7 +144,7 @@ section at the end of this file).
  * of the macros usbDisableAllRequests() and usbEnableAllRequests() in
  * usbdrv.h.
  */
-#define USB_CFG_LONG_TRANSFERS          0
+#define USB_CFG_LONG_TRANSFERS          1
 /* Define this to 1 if you want to send/receive blocks of more than 254 bytes
  * in a single control-in or control-out transfer. Note that the capability
  * for long transfers increases the driver size.
@@ -273,7 +273,7 @@ section at the end of this file).
  * HID class is 3, no subclass and protocol required (but may be useful!)
  * CDC class is 2, use subclass 2 and protocol 1 for ACM
  */
-#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    252
+#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    507
 /* Define this to the length of the HID report descriptor, if you implement
  * an HID device. Otherwise don't define it or define it to 0.
  * If you use this define, you must add a PROGMEM character array named
